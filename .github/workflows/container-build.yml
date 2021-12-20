@@ -1,0 +1,78 @@
+name: Container build
+
+on: [push]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.get-release-info.outputs.tag }}
+      url: ${{ steps.get-release-info.outputs.url }}
+      already_exists: ${{ steps.existing-image.outputs.exists }}
+    steps:
+      - name: Download PixivUtil2 release information
+        run: curl https://api.github.com/repos/Nandaka/PixivUtil2/releases -o releases.json
+      - name: Get latest release information
+        id: get-release-info
+        run: |
+          tag=$(jq '.[0].tag_name' releases.json | tr -d '"')
+          url=$(jq '.[0].tarball_url' releases.json | tr -d '"')
+          echo "::set-output name=tag::$tag"
+          echo "::set-output name=url::$url"
+          echo "tag=$tag" >> $GITHUB_ENV
+      - name: Log in to the Container registry
+        uses: docker/login-action@f054a8b539a109f9f41c372932f1ae047eff08c9
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Check for existing image
+        id: existing-image
+        uses: javajawa/check-registry-for-image@v1
+        with:
+          registry: ${{ env.REGISTRY }}
+          repository: ${{ env.IMAGE_NAME }}
+          tag: ${{ env.tag }}
+
+  build:
+    runs-on: ubuntu-latest
+    needs: check
+    if: ${{ needs.check.outputs.already_exists == 'false' }}
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v2
+      - name: Download release
+        run: |
+          mkdir -p PixivUtil2
+          wget -c ${{ needs.check.outputs.url }} -O - | tar -xz -C PixivUtil2 --strip-components 1
+      - name: Log in to the Container registry
+        uses: docker/login-action@f054a8b539a109f9f41c372932f1ae047eff08c9
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v3
+        with:
+          flavor: |
+            latest=true
+            prefix=
+            suffix=
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=${{ needs.check.outputs.tag }}
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v2
+        with:
+          file: Dockerfile
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
