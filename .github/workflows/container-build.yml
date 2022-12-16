@@ -59,7 +59,7 @@ jobs:
           tags: |
             type=raw,value=${{ needs.check.outputs.tag }}
       - name: Build and push Docker image
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v3
         with:
           file: Dockerfile
           context: .
