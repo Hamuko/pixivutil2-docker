@@ -4,7 +4,7 @@ Docker container builds of Nandaka's [PixivUtil2](https://github.com/Nandaka/Pix
 
 ## Example usage
 
-```bash
+```shell
 docker run \
     --rm \
     -it \
@@ -25,9 +25,9 @@ dbPath = /db/db.sqlite
 
 For frequent use, it's recommended to define your `docker run` command as an alias. This allows to easily run PixivUtil2, even with command-line arguments.
 
-```
-~ $ alias pixivutil2='docker run --rm -it -v [...] ghcr.io/hamuko/pixivutil2-docker'
-~ $ pixivutil2 -x -s 1 9314725
+```shell
+$ alias pixivutil2='docker run --rm -it -v [...] ghcr.io/hamuko/pixivutil2-docker'
+$ pixivutil2 -x -s 1 9314725
 ┌──────────────────────────────────────────────────────────┐
 │ PixivDownloader2 version 20220701                        │
 │ https://github.com/Nandaka/PixivUtil2/releases           │
