@@ -25,8 +25,8 @@ jobs:
         run: |
           tag=$(jq '.[0].tag_name' releases.json | tr -d '"')
           url=$(jq '.[0].tarball_url' releases.json | tr -d '"')
-          echo "::set-output name=tag::$tag"
-          echo "::set-output name=url::$url"
+          echo "tag=$tag" >> $GITHUB_OUTPUT
+          echo "url=$url" >> $GITHUB_OUTPUT
           echo "tag=$tag" >> $GITHUB_ENV
 
   build:
